@@ -149,6 +149,14 @@ input,select{width:100%;padding:10px;border:1px solid var(--line);border-radius:
 
   <div class="warn" id="netWarn" style="display:none"></div>
 
+  <div class="warn" id="keyWarn" style="display:none">
+    Watching only. This browser holds no key for <b id="keyWarnPanel"></b>, so
+    its buttons will do nothing at all. A phone gets the key by opening the panel
+    while on the panel's own Wi-Fi. On a computer, type it in: it is printed on
+    the panel's settings screen and in its boot banner.
+    <button class="act" id="keyWarnBtn" style="margin-top:10px">ENTER THE PANEL KEY</button>
+  </div>
+
   <div class="panel" id="loginPanel" style="display:none">
     <h2>Sign in</h2>
     <div class="row">
@@ -818,6 +826,16 @@ function chooseCurrent(id, dev){
   }
 }
 
+/* A panel can be watched by anyone the broker lets in, but commanded only by a
+   browser holding its key. Without this, the difference shows up as buttons
+   that quietly do nothing, which is the worst way for it to show up. */
+function paintKeyState(){
+  var el = $("keyWarn");
+  if (!current || panelKeys[current]) { el.style.display = "none"; return; }
+  $("keyWarnPanel").textContent = current;
+  el.style.display = "block";
+}
+
 function refreshDeviceList(){
   var ids = Object.keys(devices).sort();
   var pick = $("devicePick");
@@ -985,6 +1003,8 @@ function render(){
   /* A panel that came up for an ordinary reason says nothing. One that crashed,
      browned out or was caught by the watchdog says so here, because that is the
      only place anyone is looking when it happens. */
+  paintKeyState();
+
   var reset = dev.config && dev.config.reset;
   var odd = reset && reset !== "power on" && reset !== "software restart";
   $("deviceLabel").textContent = labels().panel +
@@ -1330,6 +1350,14 @@ $("connectBtn").addEventListener("click", connect);
 $("devicePick").addEventListener("change", function(){
   userPickedDevice = true;
   current = this.value; cards = []; render();
+});
+
+$("keyWarnBtn").addEventListener("click", function(){
+  $("cfgBtn").hidden = false;
+  $("cfgPanel").style.display = "block";
+  $("panelId").value = current || "";
+  $("panelKey").value = "";
+  $("panelKey").focus();
 });
 
 $("signOutBtn").addEventListener("click", function(){
