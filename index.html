@@ -714,6 +714,10 @@ function diagnoseBroker(){
   netWarn("Cannot reach the broker. Checking what is in the way...");
 
   portOpensTwice("wss://" + cfg.host + ":" + cfg.port + cfg.path).then(function(open){
+    // The checks take the best part of half a minute, and the connection often
+    // succeeds while they are still running. An answer about a failure that is
+    // already over belongs nowhere near the screen.
+    if (everConnected) { netWarn(""); diagnosing = false; return; }
     if (open) {
       netWarn("This network reaches the broker, so the connection itself was "
             + "refused. Check the username and password on the Broker screen.");
@@ -721,6 +725,7 @@ function diagnoseBroker(){
       return;
     }
     return webWorks().then(function(ok){
+      if (everConnected) { netWarn(""); diagnosing = false; return; }
       netWarn(ok
         ? ("The web is working but nothing will open on port " + cfg.port + ". "
          + "Either this network is not carrying that port, or it is too slow to "
@@ -737,6 +742,11 @@ function connect(){
   if (client) { try { client.end(true); } catch(e){} client = null; }
 
   devices = {}; current = null;
+  // The list is about to be rebuilt from nothing, so a choice made against the
+  // old list cannot stand. Leaving it set means nothing is ever selected again
+  // and the page sits empty, which is what entering a panel key used to do.
+  userPickedDevice = false;
+  $("keyWarn").style.display = "none";
   $("devicePick").innerHTML = ""; $("devicePick").classList.add("hide");
 
   var url = "wss://" + cfg.host + ":" + cfg.port + cfg.path;
@@ -852,6 +862,7 @@ function refreshDeviceList(){
     if (!ids.length) {
       $("deviceLabel").textContent =
         "No paired panel. Open the panel once while on its own Wi-Fi.";
+      $("keyWarn").style.display = "none";
       pick.classList.add("hide");
       return;
     }
