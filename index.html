@@ -415,13 +415,16 @@ function $(id){ return document.getElementById(id); }
    only ever see their own panels, a maintenance session needs to see the lot. */
 var arrivedFromApp = false;
 
+/* Both dashboards are served from the same github.io host, so they share one
+   browser storage area. These names carry a 123 to keep this page's session
+   from being picked up by the one that gives demos, and the other way round. */
 var panelKeys = {};
-try { panelKeys = JSON.parse(localStorage.getItem("argoPanelKeys") || "{}"); } catch(e){}
+try { panelKeys = JSON.parse(localStorage.getItem("argo123PanelKeys") || "{}"); } catch(e){}
 
 function rememberKey(device, key){
   if (!device || !key) return;
   panelKeys[device] = key;
-  try { localStorage.setItem("argoPanelKeys", JSON.stringify(panelKeys)); } catch(e){}
+  try { localStorage.setItem("argo123PanelKeys", JSON.stringify(panelKeys)); } catch(e){}
 }
 
 function havePairedPanels(){ return Object.keys(panelKeys).length > 0; }
@@ -562,8 +565,8 @@ $("loginBtn").addEventListener("click", function(){
       user: account.u, pass: account.p,
       tenant: account.tenant, host: account.h || cfg.host
     });
-    try { localStorage.setItem("argoBroker", JSON.stringify(cfg)); } catch(e){}
-    try { localStorage.setItem("argoUser", String(user).trim().toLowerCase()); } catch(e){}
+    try { localStorage.setItem("argo123Broker", JSON.stringify(cfg)); } catch(e){}
+    try { localStorage.setItem("argo123User", String(user).trim().toLowerCase()); } catch(e){}
 
     // connect() rebuilds cfg from the broker form, so the form has to agree
     // with what signing in just produced or the credential is wiped on its way
@@ -584,9 +587,9 @@ $("loginBtn").addEventListener("click", function(){
 
 function signOut(){
   try {
-    localStorage.removeItem("argoBroker");
-    localStorage.removeItem("argoUser");
-    localStorage.removeItem("argoPanelKeys");
+    localStorage.removeItem("argo123Broker");
+    localStorage.removeItem("argo123User");
+    localStorage.removeItem("argo123PanelKeys");
   } catch(e){}
   location.reload();
 }
@@ -594,7 +597,7 @@ function signOut(){
 /* ------------------------------------------------------------- settings -- */
 function loadCfg(){
   var saved = {};
-  try { saved = JSON.parse(localStorage.getItem("argoBroker") || "{}"); } catch(e){}
+  try { saved = JSON.parse(localStorage.getItem("argo123Broker") || "{}"); } catch(e){}
   cfg = Object.assign({}, DEFAULTS, saved);
 
   // A credential handed over in the link wins over anything remembered here,
@@ -615,7 +618,7 @@ function saveCfg(){
   };
   // Credentials stay in this browser. Stage two issues a per-user credential
   // from a backend instead of asking each viewer to type a shared one.
-  try { localStorage.setItem("argoBroker", JSON.stringify(cfg)); } catch(e){}
+  try { localStorage.setItem("argo123Broker", JSON.stringify(cfg)); } catch(e){}
 
   rememberKey($("panelId").value.trim(), $("panelKey").value.trim());
 }
@@ -1216,7 +1219,7 @@ loadCfg();
 // never left with no way in at all.
 (function(){
   var who = null;
-  try { who = localStorage.getItem("argoUser"); } catch(e){}
+  try { who = localStorage.getItem("argo123User"); } catch(e){}
 
   if (cfg.user) {
     signedIn = true;
