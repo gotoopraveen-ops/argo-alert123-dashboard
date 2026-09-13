@@ -786,8 +786,25 @@ function onMessage(topic, payload){
   }
 
   refreshDeviceList();
-  if (!current && ((!havePairedPanels() && !arrivedFromApp) || panelKeys[id])) current = id;
+  chooseCurrent(id, dev);
   if (id === current) render();
+}
+
+/* Retained messages arrive in whatever order the broker feels like sending
+   them, so the first panel to speak can easily be one that was switched off
+   weeks ago. Open on a panel that is actually alive, and stop choosing the
+   moment somebody chooses for themselves. */
+var userPickedDevice = false;
+
+function chooseCurrent(id, dev){
+  if (userPickedDevice) return;
+  // Never open on a panel this browser is not entitled to see.
+  if ((havePairedPanels() || arrivedFromApp) && !panelKeys[id]) return;
+  if (!current) { current = id; return; }
+  if (dev.status === "online" &&
+      devices[current] && devices[current].status !== "online") {
+    current = id;
+  }
 }
 
 function refreshDeviceList(){
@@ -1299,7 +1316,10 @@ if (location.search.indexOf("broker") >= 0){
   });
 })();
 $("connectBtn").addEventListener("click", connect);
-$("devicePick").addEventListener("change", function(){ current = this.value; cards = []; render(); });
+$("devicePick").addEventListener("change", function(){
+  userPickedDevice = true;
+  current = this.value; cards = []; render();
+});
 
 $("signOutBtn").addEventListener("click", function(){
   if (confirm("Sign out of this browser?")) signOut();
